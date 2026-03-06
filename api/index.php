@@ -6,11 +6,13 @@ putenv('APP_SERVICES_CACHE=/tmp/services.php');
 putenv('APP_PACKAGES_CACHE=/tmp/packages.php');
 putenv('APP_CONFIG_CACHE=/tmp/config.php');
 putenv('APP_ROUTES_CACHE=/tmp/routes.php');
+putenv('VIEW_COMPILED_PATH=/tmp/views');
 
 // 2. تجهيز قاعدة البيانات في مجلد مؤقت يسمح به Vercel
 if (!file_exists('/tmp/database.sqlite')) {
     if (!is_dir('/tmp')) {
         mkdir('/tmp', 0777, true);
+        if (!is_dir('/tmp/views')) { mkdir('/tmp/views', 0777, true); }
     }
     touch('/tmp/database.sqlite');
 }

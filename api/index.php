@@ -1,48 +1,45 @@
 <?php
 
-// 1. إخبار Laravel بتوجيه كل ملفات "الكاش" إلى المجلد المؤقت المسموح به في Vercel
-// هذا السطر يحل مشكلة الخطأ 500 و "directory must be writable" نهائياً
+// 1. توجيه الكاش إلى المجلد المؤقت لتجنب أخطاء نظام الملفات (Read-only)
 putenv('APP_SERVICES_CACHE=/tmp/services.php');
 putenv('APP_PACKAGES_CACHE=/tmp/packages.php');
 putenv('APP_CONFIG_CACHE=/tmp/config.php');
 putenv('APP_ROUTES_CACHE=/tmp/routes.php');
 putenv('VIEW_COMPILED_PATH=/tmp/views');
 
-// 2. تجهيز قاعدة البيانات في مجلد مؤقت يسمح به Vercel
+// 2. تجهيز المجلدات المؤقتة وقاعدة البيانات
+if (!is_dir('/tmp/views')) {
+    mkdir('/tmp/views', 0777, true);
+}
+
 if (!file_exists('/tmp/database.sqlite')) {
     if (!is_dir('/tmp')) {
         mkdir('/tmp', 0777, true);
-        if (!is_dir('/tmp/views')) { mkdir('/tmp/views', 0777, true); }
     }
     touch('/tmp/database.sqlite');
 }
 
-// 3. تشغيل ملف Laravel الأساسي (تأكد من المسار الصحيح)
-require __DIR__ . '/../public/index.php';
+// 3. تحميل تطبيق Laravel (نحتاج الـ Autoloader أولاً)
+$app = require __DIR__ . '/../bootstrap/app.php';
 
-// 4. أمر سحري لإنشاء الجداول تلقائياً (Migration)
-try {
-    // نستخدم الـ Application الفعلي الذي تم إنشاؤه في الخطوة رقم 3
-    $app = require __DIR__ . '/../bootstrap/app.php';
-    $kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
-    $kernel->call('migrate', ['--force' => true]);
-} catch (\Exception $e) {
-    // تجاهل الأخطاء إذا كانت الجداول موجودة مسبقاً
-}
-// ... الكود السابق ...
+// 4. الربط الصحيح لمسار الـ Public (لحل مشكلة اختفاء التنسيقات والصور)
+$app->bind('path.public', function() {
+    return __DIR__ . '/../public';
+});
 
+// 5. تشغيل أوامر قاعدة البيانات (Migrations)
 try {
-    // التأكد من تحميل الـ Autoloader الخاص بـ Laravel
-    $app = require __DIR__ . '/../bootstrap/app.php';
     $kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
     
-    // تشغيل الـ Migrations بقوة (Force)
+    // تشغيل الهجرة لإنشاء الجداول
     $kernel->call('migrate', ['--force' => true]);
     
-    // اختياري: إذا كان عندك بيانات تجريبية (منتجات) تريد ظهورها فوراً
+    // إذا كنت تريد ملء الموقع بمنتجات تجريبية، فك التشفير عن السطر التالي:
     // $kernel->call('db:seed', ['--force' => true]);
     
 } catch (\Exception $e) {
-    // يمكنك كتابة الخطأ في اللوج للتأكد
-    error_log($e->getMessage());
+    error_log("Database Error: " . $e->getMessage());
 }
+
+// 6. تشغيل ملف Laravel الأساسي لمعالجة الطلب
+require __DIR__ . '/../public/index.php';

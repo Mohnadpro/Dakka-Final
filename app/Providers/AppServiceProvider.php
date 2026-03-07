@@ -4,7 +4,8 @@ namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\Vite; // أضفنا هذا السطر هنا
+use Illuminate\Support\Facades\Vite;
+use Illuminate\Support\Facades\URL; // أضفنا هذا السطر هنا
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -24,15 +25,18 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // حل مشكلة طول مفتاح قاعدة البيانات في بعض السيرفرات
+        // 1. حل مشكلة طول مفتاح قاعدة البيانات
         Schema::defaultStringLength(191);
 
-        // --- تعديل Vite للمانيفست ---
-        // أخبر Laravel بالمسار الحقيقي للمانيفست داخل مجلد .vite
-        Vite::useManifestFilename('.vite/manifest.json');
-        // ----------------------------
+        // 2. إجبار الروابط على استخدام HTTPS (لحل مشكلة Mixed Content في Vercel)
+        if (config('app.env') === 'production' || env('FORCE_HTTPS', false)) {
+            URL::forceScheme('https');
+        }
 
-        // إنشاء مجلدات التخزين في /tmp إذا لم تكن موجودة (خاص بـ Vercel)
+        // 3. تحديد مسار المانيفست لـ Vite
+        Vite::useManifestFilename('.vite/manifest.json');
+
+        // 4. إنشاء مجلدات التخزين المؤقتة في Vercel
         if (config('app.env') === 'production') {
             $storagePath = '/tmp/storage/framework/';
             foreach (['sessions', 'views', 'cache'] as $path) {

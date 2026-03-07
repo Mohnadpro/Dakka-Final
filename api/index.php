@@ -1,13 +1,16 @@
 <?php
 
-// 1. توجيه الكاش إلى المجلد المؤقت لتجنب أخطاء نظام الملفات (Read-only)
+// 1. تحميل المحرك (Autoloader) - هذا السطر هو الأهم ولولاه يظهر خطأ Class Not Found
+require __DIR__ . '/../vendor/autoload.php';
+
+// 2. توجيه الكاش إلى المجلد المؤقت
 putenv('APP_SERVICES_CACHE=/tmp/services.php');
 putenv('APP_PACKAGES_CACHE=/tmp/packages.php');
 putenv('APP_CONFIG_CACHE=/tmp/config.php');
 putenv('APP_ROUTES_CACHE=/tmp/routes.php');
 putenv('VIEW_COMPILED_PATH=/tmp/views');
 
-// 2. تجهيز المجلدات المؤقتة وقاعدة البيانات
+// 3. تجهيز المجلدات المؤقتة
 if (!is_dir('/tmp/views')) {
     mkdir('/tmp/views', 0777, true);
 }
@@ -19,27 +22,21 @@ if (!file_exists('/tmp/database.sqlite')) {
     touch('/tmp/database.sqlite');
 }
 
-// 3. تحميل تطبيق Laravel (نحتاج الـ Autoloader أولاً)
-$app = require __DIR__ . '/../bootstrap/app.php';
+// 4. تحميل تطبيق Laravel
+$app = require_once __DIR__ . '/../bootstrap/app.php';
 
-// 4. الربط الصحيح لمسار الـ Public (لحل مشكلة اختفاء التنسيقات والصور)
+// 5. ربط مسار الـ Public (لحل مشكلة التصميم)
 $app->bind('path.public', function() {
     return __DIR__ . '/../public';
 });
 
-// 5. تشغيل أوامر قاعدة البيانات (Migrations)
+// 6. تشغيل أوامر قاعدة البيانات
 try {
     $kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
-    
-    // تشغيل الهجرة لإنشاء الجداول
     $kernel->call('migrate', ['--force' => true]);
-    
-    // إذا كنت تريد ملء الموقع بمنتجات تجريبية، فك التشفير عن السطر التالي:
-    // $kernel->call('db:seed', ['--force' => true]);
-    
 } catch (\Exception $e) {
     error_log("Database Error: " . $e->getMessage());
 }
 
-// 6. تشغيل ملف Laravel الأساسي لمعالجة الطلب
+// 7. تشغيل الموقع
 require __DIR__ . '/../public/index.php';

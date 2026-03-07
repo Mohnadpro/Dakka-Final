@@ -1,6 +1,6 @@
 <?php
 
-// 1. تحميل المحرك (Autoloader) - هذا السطر هو الأهم ولولاه يظهر خطأ Class Not Found
+// 1. تحميل المحرك (Autoloader)
 require __DIR__ . '/../vendor/autoload.php';
 
 // 2. توجيه الكاش إلى المجلد المؤقت
@@ -22,10 +22,10 @@ if (!file_exists('/tmp/database.sqlite')) {
     touch('/tmp/database.sqlite');
 }
 
-// 4. تحميل تطبيق Laravel
-$app = require_once __DIR__ . '/../bootstrap/app.php';
+// 4. تحميل تطبيق Laravel (استخدام require بدلاً من require_once مهم جداً هنا)
+$app = require __DIR__ . '/../bootstrap/app.php';
 
-// 5. ربط مسار الـ Public (لحل مشكلة التصميم)
+// 5. ربط مسار الـ Public
 $app->bind('path.public', function() {
     return __DIR__ . '/../public';
 });
@@ -38,5 +38,5 @@ try {
     error_log("Database Error: " . $e->getMessage());
 }
 
-// 7. تشغيل الموقع
-require __DIR__ . '/../public/index.php';
+// 7. تشغيل الموقع (تعديل بسيط لضمان عدم التكرار)
+$app->handleRequest(Illuminate\Http\Request::capture());

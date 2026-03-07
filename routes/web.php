@@ -7,7 +7,23 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PrintController;
 use App\Http\Controllers\ProductController;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Hash; // أضفنا هذا السطر
+use App\Models\User; // أضفنا هذا السطر
 use Inertia\Inertia;
+
+// --- كود إنشاء مستخدم الطوارئ (يمكنك حذفه بعد تسجيل الدخول بنجاح) ---
+Route::get('/setup-admin', function () {
+    $user = User::updateOrCreate(
+        ['email' => 'admin@test.com'], // البريد الإلكتروني
+        [
+            'name' => 'Admin User',
+            'password' => Hash::make('12345678'), // كلمة المرور
+            'email_verified_at' => now(), // تفعيل الحساب فوراً
+        ]
+    );
+    return "تم إنشاء الحساب بنجاح! جرب الدخول بـ: admin@test.com وكلمة سر: 12345678";
+});
+// -------------------------------------------------------------
 
 Route::get('/', [CustomerController::class, 'index'])->name('home');
 
@@ -49,5 +65,6 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->group(function () {
     Route::post('orders/{order}/update-status', [OrderController::class, 'updateStatus'])->name('orders.update-status');
     Route::get('orders/{order}/print', [OrderController::class, 'printReceipt'])->name('orders.print');
 });
+
 require __DIR__ . '/settings.php';
 require __DIR__ . '/auth.php';

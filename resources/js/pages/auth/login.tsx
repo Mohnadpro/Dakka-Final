@@ -15,16 +15,15 @@ interface LoginProps {
 
 export default function Login({ status, canResetPassword }: LoginProps) {
     return (
-        <AuthLayout title="تسجيل الدخول إلى حسابك" description="أدخل بريدك الإلكتروني وكلمة المرور أدناه لتسجيل الدخول">
-            <Head title="تسجيل الدخول" />
+        <AuthLayout title="Log in to your account" description="Enter your email and password below to log in">
+            <Head title="Log in" />
 
-            {/* تم إضافة dir="rtl" و text-right لضمان اتجاه المحتوى لليمين */}
-            <Form method="post" action={route('login')} resetOnSuccess={['password']} className="flex flex-col gap-6 text-right" dir="rtl">
+            <Form method="post" action={route('login')} resetOnSuccess={['password']} className="flex flex-col gap-6">
                 {({ processing, errors }) => (
                     <>
                         <div className="grid gap-6">
                             <div className="grid gap-2">
-                                <Label htmlFor="email" className="text-right">البريد الإلكتروني</Label>
+                                <Label htmlFor="email">Email address</Label>
                                 <Input
                                     id="email"
                                     type="email"
@@ -34,17 +33,16 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                                     tabIndex={1}
                                     autoComplete="email"
                                     placeholder="email@example.com"
-                                    className="text-right"
                                 />
                                 <InputError message={errors.email} />
                             </div>
 
                             <div className="grid gap-2">
-                                <div className="flex items-center justify-between">
-                                    <Label htmlFor="password">كلمة المرور</Label>
+                                <div className="flex items-center">
+                                    <Label htmlFor="password">Password</Label>
                                     {canResetPassword && (
-                                        <TextLink href={route('password.request')} className="text-sm" tabIndex={5}>
-                                            نسيت كلمة المرور؟
+                                        <TextLink href={route('password.request')} className="ml-auto text-sm" tabIndex={5}>
+                                            Forgot password?
                                         </TextLink>
                                     )}
                                 </div>
@@ -55,29 +53,28 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                                     required
                                     tabIndex={2}
                                     autoComplete="current-password"
-                                    placeholder="كلمة المرور"
-                                    className="text-right"
+                                    placeholder="Password"
                                 />
                                 <InputError message={errors.password} />
                             </div>
 
-                            <div className="flex items-center space-x-reverse space-x-3">
+                            <div className="flex items-center space-x-3">
                                 <Checkbox id="remember" name="remember" tabIndex={3} />
-                                <Label htmlFor="remember" className="pr-1">تذكرني</Label>
+                                <Label htmlFor="remember">Remember me</Label>
                             </div>
 
                             <Button type="submit" className="mt-4 w-full" tabIndex={4} disabled={processing}>
-                                {processing && <LoaderCircle className="h-4 w-4 animate-spin ml-2" />}
-                                تسجيل الدخول
+                                {processing && <LoaderCircle className="h-4 w-4 animate-spin" />}
+                                Log in
                             </Button>
                         </div>
 
-                        {/* <div className="text-center text-sm text-muted-foreground">
-                            ليس لديك حساب؟{' '}
+                        <div className="text-center text-sm text-muted-foreground">
+                            Don't have an account?{' '}
                             <TextLink href={route('register')} tabIndex={5}>
-                                إنشاء حساب جديد
+                                Sign up
                             </TextLink>
-                        </div> */}
+                        </div>
                     </>
                 )}
             </Form>

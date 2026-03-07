@@ -33,7 +33,7 @@ $app->bind('path.public', function() {
 // إجبار Laravel على رؤية مجلد الـ build وتحديد مكان المانيفست يدوياً
 $app->usePublicPath(__DIR__ . '/../public');
 // التعديل الصحيح للمسار ليتوافق مع مكان الملف الفعلي
-putenv('VITE_MANIFEST_PATH=' . __DIR__ . '/../public/build/.vite/manifest.json');
+putenv('VITE_MANIFEST_PATH=' . __DIR__ . '/../public/build/manifest.json');
 
 // 6. تشغيل أوامر قاعدة البيانات
 try {

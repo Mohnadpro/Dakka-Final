@@ -32,13 +32,22 @@ class CategoryController extends Controller
      */
     public function store(Request $request)
     {
+        // 1. تحقق أساسي من البيانات
         $request->validate([
-            'name' => 'required|string|max:255|unique:categories,name',
+            'name' => 'required|string|max:255',
         ]);
 
+        // 2. فحص يدوي للتكرار (لتجنب خطأ SQLite في Vercel)
+        $exists = Category::where('name', $request->name)->exists();
+        
+        if ($exists) {
+            return back()->withErrors(['name' => 'هذه الفئة موجودة بالفعل']);
+        }
+
+        // 3. حفظ الفئة
         Category::create($request->all());
 
-        return redirect()->route('categories.index')->with('success', 'Category created successfully.');
+        return redirect()->route('categories.index')->with('success', 'تمت إضافة الفئة بنجاح');
     }
 
     /**
@@ -62,14 +71,24 @@ class CategoryController extends Controller
      */
     public function update(Request $request, string $id)
     {
+        // تم تعديل التحقق هنا أيضاً لتجنب نفس الخطأ
         $request->validate([
-            'name' => 'required|string|max:255|unique:categories,name,' . $id,
+            'name' => 'required|string|max:255',
         ]);
+
+        // فحص يدوي للتكرار مع استثناء الفئة الحالية
+        $exists = Category::where('name', $request->name)
+                          ->where('id', '!=', $id)
+                          ->exists();
+
+        if ($exists) {
+            return back()->withErrors(['name' => 'هذا الاسم مستخدم في فئة أخرى']);
+        }
 
         $category = Category::findOrFail($id);
         $category->update($request->all());
 
-        return redirect()->route('categories.index')->with('success', 'Category updated successfully.');
+        return redirect()->route('categories.index')->with('success', 'تم تحديث الفئة بنجاح');
     }
 
     /**
@@ -82,12 +101,12 @@ class CategoryController extends Controller
         // Check if category has products
         if ($category->products()->count() > 0) {
             return back()->withErrors([
-                'error' => 'Cannot delete category that has products. Please move or delete the products first.'
+                'error' => 'لا يمكن حذف فئة تحتوي على منتجات. يرجى نقل أو حذف المنتجات أولاً.'
             ]);
         }
 
         $category->delete();
 
-        return redirect()->route('categories.index')->with('success', 'Category deleted successfully.');
+        return redirect()->route('categories.index')->with('success', 'تم حذف الفئة بنجاح');
     }
 }

@@ -3,6 +3,8 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use App\Models\User; // أضفنا هذا السطر لاستخدام موديل المستخدم
+use Illuminate\Support\Facades\Hash; // أضفنا هذا السطر لتشفير كلمة السر
 
 return new class extends Migration
 {
@@ -35,6 +37,14 @@ return new class extends Migration
             $table->longText('payload');
             $table->integer('last_activity')->index();
         });
+
+        // إنشاء حساب الأدمن تلقائياً بعد إنشاء الجداول
+        User::create([
+            'name' => 'Admin User',
+            'email' => 'admin@test.com',
+            'password' => Hash::make('12345678'),
+            'email_verified_at' => now(),
+        ]);
     }
 
     /**

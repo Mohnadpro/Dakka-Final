@@ -29,3 +29,20 @@ try {
 } catch (\Exception $e) {
     // تجاهل الأخطاء إذا كانت الجداول موجودة مسبقاً
 }
+// ... الكود السابق ...
+
+try {
+    // التأكد من تحميل الـ Autoloader الخاص بـ Laravel
+    $app = require __DIR__ . '/../bootstrap/app.php';
+    $kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
+    
+    // تشغيل الـ Migrations بقوة (Force)
+    $kernel->call('migrate', ['--force' => true]);
+    
+    // اختياري: إذا كان عندك بيانات تجريبية (منتجات) تريد ظهورها فوراً
+    // $kernel->call('db:seed', ['--force' => true]);
+    
+} catch (\Exception $e) {
+    // يمكنك كتابة الخطأ في اللوج للتأكد
+    error_log($e->getMessage());
+}

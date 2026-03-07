@@ -43,8 +43,7 @@
 
         @routes
         @viteReactRefresh
-        @{{-- أخبرنا Laravel هنا بالبحث عن المانيفست داخل مجلد .vite يدوياً --}}
-@vite(['resources/js/app.tsx', "resources/js/pages/{$page['component']}.tsx"], 'build')
+        @vite(['resources/js/app.tsx', "resources/js/pages/{$page['component']}.tsx"])
         @inertiaHead
     </head>
     <body class="font-sans antialiased">

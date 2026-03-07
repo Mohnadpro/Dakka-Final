@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Vite; // أضفنا هذا السطر هنا
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -25,6 +26,11 @@ class AppServiceProvider extends ServiceProvider
     {
         // حل مشكلة طول مفتاح قاعدة البيانات في بعض السيرفرات
         Schema::defaultStringLength(191);
+
+        // --- تعديل Vite للمانيفست ---
+        // أخبر Laravel بالمسار الحقيقي للمانيفست داخل مجلد .vite
+        Vite::useManifestFilename('.vite/manifest.json');
+        // ----------------------------
 
         // إنشاء مجلدات التخزين في /tmp إذا لم تكن موجودة (خاص بـ Vercel)
         if (config('app.env') === 'production') {

@@ -10,8 +10,12 @@ class Category extends Model
 {
     /** @use HasFactory<\Database\Factories\CategoryFactory> */
     use HasFactory;
-    protected $guarded = ['id', 'created_at', 'updated_at'];
 
+    // نحدد الحقول التي يمكن تعبئتها (الاسم فقط في حالتنا)
+    // هذا يحمي قاعدة البيانات ويجعلها تعمل بسلاسة على Vercel
+    protected $fillable = ['name'];
+
+    // هذه الدالة هي المسؤولة عن استدعاء المنتجات ولن تتأثر أبداً
     public function products(): HasMany
     {
         return $this->hasMany(Product::class, 'category_id');

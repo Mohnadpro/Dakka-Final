@@ -39,7 +39,7 @@ class ProductController extends Controller
 
         $categories = Category::all();
 
-        // Return JSON for AJAX requests (infinite scroll) - hanya untuk request dengan page parameter
+        // Return JSON for AJAX requests (infinite scroll)
         if (($request->wantsJson() || $request->ajax()) && $request->has('page') && $request->page > 1) {
             return response()->json([
                 'products' => $products->items(),
@@ -80,7 +80,7 @@ class ProductController extends Controller
      */
     public function store(Request $request)
     {
-        // Validation
+        // 1. التحقق من البيانات (بدون استخدام unique لتجنب خطأ SQLite)
         $request->validate([
             'name' => 'required|string|max:255',
             'category_id' => 'required|exists:categories,id',
@@ -89,28 +89,36 @@ class ProductController extends Controller
             'photos.*' => 'image|max:5120', // 5MB max per image
         ]);
 
-        // Create the product
+        // 2. فحص يدوي للتكرار لتجنب استعلامات pragma المعقدة
+        $exists = Product::where('name', $request->name)->exists();
+        if ($exists) {
+            return back()->withErrors(['name' => 'هذا المنتج موجود مسبقاً']);
+        }
+
+        // 3. إنشاء المنتج (إدخال مباشر وصريح)
         $product = Product::create([
             'name' => $request->name,
             'category_id' => $request->category_id,
             'price' => $request->price,
         ]);
 
-        // Handle photo uploads
+        // 4. معالجة رفع الصور وحفظ الروابط
         if ($request->hasFile('photos')) {
             $photos = $request->file('photos');
             foreach ($photos as $index => $photo) {
+                // تخزين الصورة في مجلد public/products
                 $path = $photo->store('products', 'public');
 
+                // حفظ بيانات الصورة في جدول الصور
                 ProductPhotos::create([
                     'product_id' => $product->id,
                     'url' => Storage::url($path),
-                    'is_primary' => $index === 0, // First photo is primary
+                    'is_primary' => $index === 0, // أول صورة هي الأساسية
                 ]);
             }
         }
 
-        return redirect()->route('products.index')->with('success', 'Product created successfully.');
+        return redirect()->route('products.index')->with('success', 'تم إضافة المنتج بنجاح');
     }
 
     /**
@@ -136,16 +144,22 @@ class ProductController extends Controller
     {
         $product = Product::findOrFail($id);
 
-        // Validation
+        // Validation (Modified to avoid SQLite unique error)
         $request->validate([
             'name' => 'required|string|max:255',
             'category_id' => 'required|exists:categories,id',
             'price' => 'required|numeric|min:0',
             'photos' => 'nullable|array',
-            'photos.*' => 'image|max:5120', // 5MB max per image
+            'photos.*' => 'image|max:5120',
             'remove_photos' => 'nullable|array',
             'remove_photos.*' => 'exists:product_photos,id',
         ]);
+
+        // Manual uniqueness check for update
+        $exists = Product::where('name', $request->name)->where('id', '!=', $id)->exists();
+        if ($exists) {
+            return back()->withErrors(['name' => 'اسم المنتج مستخدم بالفعل في منتج آخر']);
+        }
 
         // Update product
         $product->update([
@@ -159,12 +173,9 @@ class ProductController extends Controller
             foreach ($request->remove_photos as $photoId) {
                 $photo = ProductPhotos::find($photoId);
                 if ($photo && $photo->product_id === $product->id) {
-                    // Delete file from storage
                     $urlPath = parse_url($photo->url, PHP_URL_PATH);
                     $filePath = str_replace('/storage/', '', $urlPath);
                     Storage::disk('public')->delete($filePath);
-
-                    // Delete from database
                     $photo->delete();
                 }
             }
@@ -181,12 +192,12 @@ class ProductController extends Controller
                 ProductPhotos::create([
                     'product_id' => $product->id,
                     'url' => Storage::url($path),
-                    'is_primary' => $existingPhotosCount === 0 && $index === 0, // First photo is primary if no existing photos
+                    'is_primary' => $existingPhotosCount === 0 && $index === 0,
                 ]);
             }
         }
 
-        return redirect()->route('products.index')->with('success', 'Product updated successfully.');
+        return redirect()->route('products.index')->with('success', 'تم تحديث المنتج بنجاح');
     }
 
     /**
@@ -196,17 +207,14 @@ class ProductController extends Controller
     {
         $product = Product::findOrFail($id);
 
-        // Delete all associated photos
         foreach ($product->photos as $photo) {
-            // Delete file from storage
             $urlPath = parse_url($photo->url, PHP_URL_PATH);
             $filePath = str_replace('/storage/', '', $urlPath);
             Storage::disk('public')->delete($filePath);
         }
 
-        // Delete product (photos will be deleted by cascade)
         $product->delete();
 
-        return redirect()->route('products.index')->with('success', 'Product deleted successfully.');
+        return redirect()->route('products.index')->with('success', 'تم حذف المنتج بنجاح');
     }
 }

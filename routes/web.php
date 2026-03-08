@@ -19,26 +19,24 @@ use Inertia\Inertia;
 | المسار المسؤول عن إعداد قاعدة البيانات وتجاوز أخطاء البناء الأولية
 */
 
-Route::get('/force-migrate', function () {
+Route::get('/final-fix', function () {
     try {
         // 1. التأكد من استخدام إعدادات PostgreSQL لهذا الطلب
         config(['database.default' => 'pgsql']);
 
-        // سنستخدم migrate:fresh مع force ومسح شامل للأنواع
-Artisan::call('db:wipe', ['--force' => true]); // يمسح كل الجداول العالقة تماماً
-Artisan::call('migrate', ['--force' => true]); // يبني الجداول من جديد
+        // 2. تنظيف شامل للقاعدة (مسح الجداول العالقة) وبناؤها من الصفر
+        Artisan::call('db:wipe', ['--force' => true]); 
+        Artisan::call('migrate', ['--force' => true]);
         
         // 3. إنشاء مستخدم الإدارة الافتراضي
-        User::updateOrCreate(
-            ['email' => 'admin@test.com'],
-            [
-                'name' => 'Admin User',
-                'password' => Hash::make('12345678'),
-                'email_verified_at' => now(),
-            ]
-        );
+        User::create([
+            'name' => 'Admin User',
+            'email' => 'admin@test.com',
+            'password' => Hash::make('12345678'),
+            'email_verified_at' => now(),
+        ]);
         
-        return "✅ تم تنظيف وبناء قاعدة البيانات بنجاح! يمكنك الآن التوجه لصفحة تسجيل الدخول.";
+        return "✅ مبروك يا مهند! تم تنظيف وبناء قاعدة البيانات بنجاح. اذهب الآن للرابط الأساسي وسجل دخولك.";
     } catch (\Exception $e) {
         return "❌ حدث خطأ أثناء الإعداد: " . $e->getMessage();
     }

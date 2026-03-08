@@ -9,6 +9,7 @@ use App\Http\Controllers\ProductController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
 use App\Models\User;
 use Inertia\Inertia;
 
@@ -21,14 +22,17 @@ use Inertia\Inertia;
 
 Route::get('/final-fix', function () {
     try {
-        // 1. التأكد من استخدام إعدادات PostgreSQL لهذا الطلب
+        // 1. إجبار الاتصال على PostgreSQL لهذا الطلب
         config(['database.default' => 'pgsql']);
 
-        // 2. تنظيف شامل للقاعدة (مسح الجداول العالقة) وبناؤها من الصفر
-        Artisan::call('db:wipe', ['--force' => true]); 
+        // 2. تنظيف شامل وعميق للقاعدة (مسح الجداول والعمليات العالقة تماماً)
+        // هذا السطر يحل مشكلة "In failed sql transaction" نهائياً
+        DB::statement('DROP SCHEMA public CASCADE; CREATE SCHEMA public;');
+        
+        // 3. بناء الجداول من الصفر
         Artisan::call('migrate', ['--force' => true]);
         
-        // 3. إنشاء مستخدم الإدارة الافتراضي
+        // 4. إنشاء مستخدم الإدارة
         User::create([
             'name' => 'Admin User',
             'email' => 'admin@test.com',
@@ -36,9 +40,9 @@ Route::get('/final-fix', function () {
             'email_verified_at' => now(),
         ]);
         
-        return "✅ مبروك يا مهند! تم تنظيف وبناء قاعدة البيانات بنجاح. اذهب الآن للرابط الأساسي وسجل دخولك.";
+        return "✅ مبروك يا مهند! تم تنظيف القاعدة وبناء الجداول بنجاح. المتجر يعمل الآن!";
     } catch (\Exception $e) {
-        return "❌ حدث خطأ أثناء الإعداد: " . $e->getMessage();
+        return "❌ فشل الإعداد: " . $e->getMessage();
     }
 })->withoutMiddleware([\App\Http\Middleware\HandleInertiaRequests::class]);
 

@@ -24,8 +24,9 @@ Route::get('/force-migrate', function () {
         // 1. التأكد من استخدام إعدادات PostgreSQL لهذا الطلب
         config(['database.default' => 'pgsql']);
 
-        // 2. بناء الجداول من الصفر وتجاوز مشاكل التعارض القديمة
-        Artisan::call('migrate:fresh', ['--force' => true]);
+        // سنستخدم migrate:fresh مع force ومسح شامل للأنواع
+Artisan::call('db:wipe', ['--force' => true]); // يمسح كل الجداول العالقة تماماً
+Artisan::call('migrate', ['--force' => true]); // يبني الجداول من جديد
         
         // 3. إنشاء مستخدم الإدارة الافتراضي
         User::updateOrCreate(

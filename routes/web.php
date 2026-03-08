@@ -25,9 +25,10 @@ Route::get('/final-fix', function () {
         // 1. إجبار الاتصال على PostgreSQL لهذا الطلب
         config(['database.default' => 'pgsql']);
 
-        // 2. تنظيف شامل وعميق للقاعدة (مسح الجداول والعمليات العالقة تماماً)
-        // هذا السطر يحل مشكلة "In failed sql transaction" نهائياً
-        DB::statement('DROP SCHEMA public CASCADE; CREATE SCHEMA public;');
+        // 2. تنظيف شامل وعميق للقاعدة عبر أمرين منفصلين
+        // السطر الأول يحذف المجلد العام للقاعدة، والثاني يعيد إنشاؤه نظيفاً
+        DB::statement('DROP SCHEMA public CASCADE');
+        DB::statement('CREATE SCHEMA public');
         
         // 3. بناء الجداول من الصفر
         Artisan::call('migrate', ['--force' => true]);
